@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block sidebar %}
+
+    <ul class="nav nav-sidebar">
+        <li>
+            <a href="{% url 'host_mgr' %}">主机</a>
+        </li>
+{#        <li>#}
+{#            <a href="{% url 'multi_cmd' %}">批量命令</a>#}
+{#        </li>#}
+{#        <li>#}
+{#            <a href="{% url 'multi_file_transfer' %}">文件分发</a>#}
+{#        </li>#}
+{#        <li>#}
+{#            <a href="{% url 'task_cron' %}">任务编排</a>#}
+{#        </li>#}
+
+    </ul>
+
+{% endblock %}
+
+
+{% block content-panel %}
+
+    HOST
+
+{% endblock %}

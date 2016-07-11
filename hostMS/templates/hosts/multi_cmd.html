@@ -1,0 +1,173 @@
+{% extends 'hosts.html' %}
+
+
+{% block content-panel %}
+
+    <h3>批量命令</h3>
+
+    <div>
+        <div class="col-lg-3">
+            <div  style="margin-left:-35px" class="panel panel-info">
+              <div class="panel-title">
+                  主机组
+              </div>
+              <div class="panel-body">
+
+                <div id="host-group" class="list-group">
+                  <a href="#" gid="-1" class="list-group-item active">
+                    未分组主机 [{{ request.user.bind_hosts.select_related.count }}]
+                  </a>
+                  {% for group in request.user.host_groups.select_related %}
+                      <a gid="{{ group.id }}" href="#" onclick="GetHostList({{ group.id }},this)" class="list-group-item ">
+                        {{ group.name }} [{{ group.bindhosttouser_set.select_related.count }}]
+                      </a>
+                  {% endfor %}
+                </div>
+
+
+              </div>
+            </div> <!--end panel-->
+        </div>
+        <div class="col-lg-9">
+
+            <div style="margin-left:-15px" class="panel panel-info">
+              <div class="panel-title">
+                  任务信息
+              </div>
+              <div class="panel-body">
+                <div class="host-list">
+                    <ol>
+                    </ol>
+
+                </div>
+                <hr />
+
+                <div class="execution-box">
+                    <form method="post" action="{% url 'multi_cmd_exec' %}">
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">命令</label>
+                        <textarea type="text" class="form-control" name="cmd" id="cmd" placeholder="输入要执行的命令..." > </textarea>
+                      </div>
+
+                      <div class="checkbox">
+                        <!--label>
+                          <input type="checkbox"> Check me out
+                        </label-->
+                      </div>
+                    </form>
+                    <button type="button" onclick="post_task('cmd')" class="btn btn-success">提交执行</button>
+
+                </div>
+
+              </div>
+            </div> <!--end panel-->
+
+             <div class="row">
+
+             <div class="panel panel-info">
+                  <div class="panel-title">
+                      任务执行结果
+                  </div>
+                  <div id="task_result" class="panel-body">
+                      dff
+                  </div>
+
+              </div>
+             </div>
+
+
+
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block bottom-js %}
+<script type="text/javascript">
+    $(document).ready(function(){
+
+
+
+
+    });//end doc
+    function post_task(task_type){
+        var active_group_id = $("#host-group a").filter(".active").attr("gid");
+        //console.log(active_group);
+        if (task_type == 'cmd'){
+            cmd_val = $("#cmd").val();
+
+            MultiCmdExec(cmd_val,active_group_id,task_type);
+        }
+
+    }
+
+    function  MultiCmdExec(cmd_val,active_group_id,task_type){
+
+        $.post("{% url 'multi_cmd_exec' %}", {
+            'cmd':cmd_val,
+            'gid':active_group_id,
+            'task_type':task_type,
+            'csrfmiddlewaretoken': $("input[name='csrfmiddlewaretoken']").val()
+        },function(callback){
+            console.log(callback);
+            callback = JSON.parse(callback);
+            GetTaskResult(callback);
+
+
+        });//end post
+    }
+
+    function GetTaskResult(callback){
+        task_id = callback.task_id;
+        console.log(task_id);
+        setInterval(function(){
+
+             $.getJSON("{% url 'get_task_res' %}", {'task_id': task_id},function(res){
+                console.log(res);
+                DiskTaskResult(res);
+            });//end getJson
+
+        },3000 );
+
+    }
+
+    function DiskTaskResult(res){
+         $("#task_result").html(' ');
+        $.each(res.task_result,function(index,cmd_result){
+            console.log(cmd_result);
+            var res_html = "<div class=row>" +
+                            "<p>" + cmd_result.bind_host__host__hostname + "(" + cmd_result.bind_host__host__ip_addr  + ")" + "-->" + cmd_result.bind_host__host_user__username + "</p>" +
+                            "<pre>" + cmd_result.event_log + "</pre>" +
+                            "</div>";
+
+
+            $("#task_result").append(res_html);
+
+        });//end each
+
+    }
+
+
+    function GetHostList(gid,self){
+        $(self).addClass("active");
+        $(self).siblings().removeClass("active");
+
+        $(".host-list ol").html(" ");
+        $.getJSON("{% url 'get_host_list' %}", {'gid':gid},function(callback){
+
+            console.log(callback);
+
+            $.each(callback,function(index,val){
+               console.log(index + '--' + val);
+               var li_html = "<li>" + val.host__hostname + "(" + val.host__ip_addr + ")" + " --> " + val.host_user__username + "</li>";
+               $(".host-list ol").append(li_html);
+            });
+
+        });//end getJson
+
+    }
+
+</script>
+
+
+{% endblock %}
