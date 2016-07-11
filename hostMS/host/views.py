@@ -1,3 +1,4 @@
+#coding:utf8
 from django.shortcuts import render,HttpResponse,HttpResponseRedirect
 from django.contrib.auth import authenticate,login,logout
 from models import *
@@ -29,13 +30,11 @@ def acc_login(request):
         else:
             return render(request,'login.html',{'log_err':"Wrong username or password!"})
 
-# def host_mgr(request):
-#     select_group_id = request.GET.get("selected_group")
-#     if select_group_id:
-#         host_list = BindHostToUser.objects.filter(host_groups__id=select_group_id)
-#     else:
-#         host_list = request.user.bind_hosts.select_related()
-#     return render(request,'hosts/host_mgr.html',{'active_main_node':'/hosts/','host_list':host_list})
-
-def host_mgr(req):
-    return render(req,'hosts.html',locals())
+def host_mgr(request):
+    select_group_id = request.GET.get("selected_group")
+    if select_group_id:
+        host_list = BindHostToUser.objects.filter(host_groups=select_group_id)
+        # host_list = BindHostToUser.objects.filter(host_groups__id=select_group_id) # 关联查询
+    else:
+        host_list = request.user.bind_hosts.select_related()
+    return render(request,'hosts/host_mgr.html',{'active_main_node':'/hosts/','host_list':host_list})
